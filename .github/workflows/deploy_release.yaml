@@ -1,0 +1,35 @@
+name: Upload package to pypi
+
+on:
+  release:
+    types:
+      - published
+
+jobs:
+  ci:
+    runs-on: ubuntu-22.04
+
+    steps:
+    - uses: actions/checkout@v3
+    - uses: pdm-project/setup-pdm@v3
+      with:
+        python-version: '3.x'
+        cache: true
+    - name: Install dependencies
+      run: pdm install
+    - name: Test with pytest
+      run: |
+        docker compose -f tests/docker-compose.yaml up -d
+        sleep 20
+        pdm test
+    - name: Test SSL connection with pytest
+      run: |
+        enable_ssl=true docker compose -f tests/docker-compose-ssl.yaml up -d
+        sleep 20
+        pdm test-ssl
+
+    - name: Build and publish
+      env:
+        PDM_PUBLISH_USERNAME: ${{ secrets.PYPI_NAME }}
+        PDM_PUBLISH_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+      run: pdm publish
