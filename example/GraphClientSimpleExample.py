@@ -7,6 +7,7 @@
 
 
 import json
+import sys
 import time
 
 from FormatResp import print_resp, result_to_df_buildin, result_to_df
@@ -19,10 +20,11 @@ if __name__ == "__main__":
     client = None
     try:
         config = Config()
-        config.max_connection_pool_size = 2
+        config.max_connection_pool_size = 6
         # init connection pool
         connection_pool = ConnectionPool()
-        assert connection_pool.init([("127.0.0.1", 9669)], config)
+        assert connection_pool.init(
+            [("10.126.158.204", 9669), ("10.126.158.205", 9669), ("10.126.158.206", 9669)], config)
 
         # get session from the pool
         client = connection_pool.get_session("root", "nebula")
@@ -33,12 +35,10 @@ if __name__ == "__main__":
         json_obj = json.loads(resp_json)
         print(json.dumps(json_obj, indent=2, sort_keys=True))
 
-        client.execute(
-            "CREATE SPACE IF NOT EXISTS test(vid_type=FIXED_STRING(30)); USE test;"
-            "CREATE TAG IF NOT EXISTS person(name string, age int);"
-            "CREATE EDGE IF NOT EXISTS like (likeness double);"
+        r = client.execute(
+            "SHOW SPACES;"
         )
-
+        sys.exit(0)
         # insert data need to sleep after create schema
         time.sleep(6)
 

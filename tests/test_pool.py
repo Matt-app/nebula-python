@@ -23,23 +23,32 @@ from nebula3.gclient.net import ConnectionPool
 
 
 class TestConnectionPool(TestCase):
+    addresses = None
+    configs = None
+    pool = None
+
     @classmethod
-    def setup_class(self):
-        self.addresses = list()
-        self.addresses.append(("127.0.0.1", 9669))
-        self.addresses.append(("127.0.0.1", 9670))
-        self.configs = Config()
-        self.configs.min_connection_pool_size = 2
-        self.configs.max_connection_pool_size = 4
-        self.configs.idle_time = 2000
-        self.configs.interval_check = 2
-        self.pool = ConnectionPool()
-        assert self.pool.init(self.addresses, self.configs)
-        assert self.pool.connects() == 2
+    def setup_class(cls):
+        cls.addresses = list()
+        cls.addresses.append(("10.126.158.204", 9669))
+        cls.addresses.append(("10.126.158.205", 9669))
+        cls.addresses.append(("10.126.158.206", 9669))
+        cls.configs = Config()
+        cls.configs.min_connection_pool_size = 30
+        cls.configs.max_connection_pool_size = 60
+        cls.configs.idle_time = 2000
+        cls.configs.interval_check = 2
+        cls.pool = ConnectionPool()
+        assert cls.pool.init(cls.addresses, cls.configs)
+        assert cls.pool.connects() == 30
 
     def test_right_hostname(self):
         pool = ConnectionPool()
-        assert pool.init([("localhost", 9669)], Config())
+        assert pool.init([("10.126.158.204", 9669), ("10.126.158.205", 9669), ("10.126.158.206", 9669)], Config())
+        for i in range(0, 30):
+            conn = pool.get_connection()
+            assert conn is not None
+        assert pool.connects() == 30
 
     def test_wrong_hostname(self):
         pool = ConnectionPool()
@@ -50,8 +59,8 @@ class TestConnectionPool(TestCase):
             assert True
 
     def test_ping(self):
-        assert self.pool.ping(("127.0.0.1", 9669))
-        assert self.pool.ping(("127.0.0.1", 5000)) is False
+        assert self.pool.ping(("10.126.158.204", 9669))
+        assert self.pool.ping(("10.126.158.204", 5000)) is False
 
     def test_init_failed(self):
         # init succeeded
